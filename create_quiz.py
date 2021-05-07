@@ -101,7 +101,23 @@ def create_quiz(question, options, correct_option_id):
 
 
 def get_question_number():
-    return 0
+    question_number_default = 0
+
+    open('question_counter.txt', 'a').close()
+
+    with open('question_counter.txt', 'r+') as file:
+        fileline = file.readline()
+
+        if fileline != '':
+            question_number_default = fileline
+
+        question_number_default = int(question_number_default) + 1
+
+        file.seek(0)
+        file.write(str(question_number_default))
+        file.truncate()
+
+    return question_number_default - 1
 
 
 def randomize_options(options):
