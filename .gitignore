@@ -173,3 +173,4 @@ fabric.properties
 
 sqlite.db
 question_counter.txt
+user_message_log.txt
