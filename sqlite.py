@@ -9,7 +9,7 @@ load_dotenv()
 
 
 class SQLite:
-    SQLITE_NAME = os.getenv('SQLITE_NAME')
+    SQLITE_FILE_NAME = os.getenv('SQLITE_FILE_NAME')
     SQLITE_TABLE_GROUP_NAME = os.getenv('SQLITE_TABLE_GROUP_NAME')
 
     def __init__(self):
@@ -18,14 +18,14 @@ class SQLite:
 
     def __execute_select(self, statement: str, parameters: Iterable[Any] = ()):
         """https://stackoverflow.com/a/46519449"""
-        with contextlib.closing(sqlite3.connect(self.SQLITE_NAME)) as connect, connect, \
+        with contextlib.closing(sqlite3.connect(self.SQLITE_FILE_NAME)) as connect, connect, \
                 contextlib.closing(connect.cursor()) as cursor:
             cursor.execute(statement, parameters)
 
             return cursor.fetchall()
 
     def __execute_mutable(self, statement: str, parameters: Iterable[Any] = ()):
-        with contextlib.closing(sqlite3.connect(self.SQLITE_NAME)) as connect, connect, \
+        with contextlib.closing(sqlite3.connect(self.SQLITE_FILE_NAME)) as connect, connect, \
                 contextlib.closing(connect.cursor()) as cursor:
             cursor.execute(statement, parameters)
             connect.commit()

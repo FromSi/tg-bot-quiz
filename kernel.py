@@ -23,6 +23,8 @@ class Kernel:
         self.BOT_MESSAGE_SEND_REGISTER_GROUP_EMOJI = os.getenv('BOT_MESSAGE_SEND_REGISTER_GROUP_EMOJI')
         self.FILE_QUESTION_MARK_HANDLER = os.getenv('FILE_QUESTION_MARK_HANDLER')
         self.FILE_ANSWER_MARK_HANDLER = os.getenv('FILE_ANSWER_MARK_HANDLER')
+        self.SQLITE_NAME = os.getenv('SQLITE_NAME')
+        self.SQLITE_TABLE_GROUP_NAME = os.getenv('SQLITE_TABLE_GROUP_NAME')
 
         self.BOT_INTERVAL_POLLING = int(os.getenv('BOT_INTERVAL_POLLING'))
         self.BOT_TIMEOUT_POLLING = int(os.getenv('BOT_TIMEOUT_POLLING'))
