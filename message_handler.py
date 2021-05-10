@@ -1,55 +1,36 @@
-import sqlite
-import telebot
 import threading
-import os
 from time import sleep
-from dotenv import load_dotenv
-
-
-load_dotenv()
-
-
-SQLITE = sqlite.SQLite()
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-BOT_INTERVAL = int(os.getenv('BOT_INTERVAL'))
-BOT_TIMEOUT = int(os.getenv('BOT_TIMEOUT'))
-
-BOT_MESSAGE_SEND_START_HELP = os.getenv('BOT_MESSAGE_SEND_START_HELP')
-BOT_MESSAGE_SEND_START_HELP_EMOJI = os.getenv('BOT_MESSAGE_SEND_START_HELP_EMOJI')
-BOT_MESSAGE_SEND_REGISTER_GROUP = os.getenv('BOT_MESSAGE_SEND_REGISTER_GROUP')
-BOT_MESSAGE_SEND_REGISTER_GROUP_EMOJI = os.getenv('BOT_MESSAGE_SEND_REGISTER_GROUP_EMOJI')
+import kernel
 
 
 def bot_polling():
     while True:
-        bot = telebot.TeleBot(BOT_TOKEN)
+        app = kernel.Kernel()
 
         try:
-            bot_actions(bot)
-            bot.polling(none_stop=True, interval=BOT_INTERVAL, timeout=BOT_TIMEOUT)
+            bot_actions(app)
+            app.bot.polling(none_stop=True, interval=app.BOT_INTERVAL_POLLING, timeout=app.BOT_TIMEOUT_POLLING)
         except Exception as ex:
-            print("Bot polling failed, restarting in {0}sec. Error:\n{1}".format(BOT_TIMEOUT, ex))
-            bot.stop_polling()
-            sleep(BOT_TIMEOUT)
+            app.bot.stop_polling()
+            sleep(app.BOT_TIMEOUT_POLLING)
         else:
-            bot.stop_polling()
-            print("Bot polling loop finished")
+            app.bot.stop_polling()
             break
 
 
-def bot_actions(bot):
-    @bot.message_handler(commands=['start', 'help'])
+def bot_actions(app):
+    @app.bot.message_handler(commands=['start', 'help'])
     def send_welcome(message):
-        bot.send_message(message.chat.id, BOT_MESSAGE_SEND_START_HELP)
-        bot.send_message(message.chat.id, BOT_MESSAGE_SEND_START_HELP_EMOJI)
+        app.bot.send_message(message.chat.id, app.BOT_MESSAGE_SEND_START_HELP)
+        app.bot.send_message(message.chat.id, app.BOT_MESSAGE_SEND_START_HELP_EMOJI)
 
-    @bot.message_handler(content_types=['new_chat_members'])
+    @app.bot.message_handler(content_types=['new_chat_members'])
     def register_group(message):
-        is_add_group = SQLITE.add_group(message.chat.id)
+        is_add_group = app.sqlite.add_group(message.chat.id)
 
         if is_add_group:
-            bot.send_message(message.chat.id, BOT_MESSAGE_SEND_REGISTER_GROUP)
-            bot.send_message(message.chat.id, BOT_MESSAGE_SEND_REGISTER_GROUP_EMOJI)
+            app.bot.send_message(message.chat.id, app.BOT_MESSAGE_SEND_REGISTER_GROUP)
+            app.bot.send_message(message.chat.id, app.BOT_MESSAGE_SEND_REGISTER_GROUP_EMOJI)
 
 
 polling_thread = threading.Thread(target=bot_polling)

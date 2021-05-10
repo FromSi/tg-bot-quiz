@@ -1,137 +1,141 @@
-import telebot
-import sqlite
-import os
+import kernel
 import random
-from dotenv import load_dotenv
-
-
-load_dotenv()
-
-
-SQLITE = sqlite.SQLite()
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-BOT_MESSAGE_SEARCH_TAG = os.getenv('BOT_MESSAGE_SEARCH_TAG')
-BOT = telebot.TeleBot(BOT_TOKEN)
-GROUPS = SQLITE.get_groups()
-BOT_POLL_TYPE = 'quiz'
-BOT_POLL_TITLE = os.getenv('BOT_POLL_TITLE')
 
 
 class QuestionQuiz:
+    """Класс для вопроса и его ответов"""
     def __init__(self):
         self.question = ''
         self.options = []
 
 
-def get_question_quiz_by_file(question_number, file):
+def create_telegram_quiz(app, question, options, correct_option_id):
+    """Создание ботом телеграма переданного вопроса в зарегистрированные группы"""
+    groups = app.sqlite.get_groups()
+
+    for group in groups:
+        gid = group[0]
+
+        app.bot.send_message(gid, question)
+
+        app.bot.send_poll(
+            chat_id=gid,
+            question=app.BOT_POLL_TITLE,
+            options=options,
+            is_anonymous=False,
+            type=app.BOT_POLL_TYPE,
+            correct_option_id=correct_option_id,
+        )
+
+
+def get_question_quiz(app, question_number=0):
+    """Получение QuestionQuiz объекта по средством обработки файла"""
     question_quiz = QuestionQuiz()
 
-    for fileline in file:
-        if fileline[0:3] == '[q]':
-            if question_number == 0:
-                question_quiz.question += "#{0}\n\n".format(BOT_MESSAGE_SEARCH_TAG)
-                question_quiz.question += fileline[3:]
+    with open(app.FILE_QUESTION_NAME, 'r') as file:
+        for fileline in file:
+            """Находка нужного вопроса. Ставим курсор."""
+            if fileline[0:3] == app.FILE_QUESTION_MARK_HANDLER:
+                if question_number == 0:
+                    question_quiz.question += "#{0}\n\n".format(app.BOT_MESSAGE_SEARCH_TAG)
+                    question_quiz.question += fileline[3:]
+
+                    break
+                else:
+                    question_number -= 1
+
+        for fileline in file:
+            """Получаем дополнительный контент вопроса (с отступами). Выходим при переходе на ответ."""
+            if fileline[0:3] == app.FILE_ANSWER_MARK_HANDLER:
+                question_quiz.options.append(fileline[3:])
 
                 break
-            else:
-                question_number -= 1
 
-    for fileline in file:
-        if fileline[0:3] == '[a]':
-            question_quiz.options.append(fileline[3:])
+            question_quiz.question += fileline
 
-            break
-
-        question_quiz.question += fileline
-
-    for fileline in file:
-        if fileline[0:3] == '[q]':
-            break
-        else:
-            question_quiz.options.append(fileline[3:])
+        for fileline in file:
+            """Получение ответов. Остановка на новом вопросе."""
+            if fileline[0:3] == app.FILE_QUESTION_MARK_HANDLER:
+                break
+            elif fileline[3:] != '':
+                question_quiz.options.append(fileline[3:])
 
     return question_quiz
 
 
-def get_correct_question_number_by_file(question_number, file):
+def get_amount_questions(app):
+    """Получение общего количества вопросов в файле"""
     amount_questions = 0
 
-    for fileline in file:
-        if fileline[0:3] == '[q]':
-            amount_questions += 1
+    with open(app.FILE_QUESTION_NAME, 'r') as file:
+        for fileline in file:
+            if fileline[0:3] == app.FILE_QUESTION_MARK_HANDLER:
+                amount_questions += 1
 
-    return question_number % amount_questions
-
-
-def get_question_quiz(question_number=0):
-    with open('questions.txt', 'r') as file:
-        question_number = get_correct_question_number_by_file(question_number, file)
-
-    with open('questions.txt', 'r') as file:
-        question_quiz = get_question_quiz_by_file(
-            question_number,
-            file,
-        )
-
-        return question_quiz
+    return amount_questions
 
 
-def send_poll(gid, options, correct_option_id):
-    BOT.send_poll(
-        chat_id=gid,
-        question=BOT_POLL_TITLE,
-        options=options,
-        is_anonymous=False,
-        type=BOT_POLL_TYPE,
-        correct_option_id=correct_option_id,
-    )
+def get_question_number(app):
+    """
+    Определение текущего вопроса.
+    Запись номера вопроса.
+    Если вопросы закончились, будет рандом (заглушка).
+    Когда появится новый вопрос, он будет вызван как следующий.
+    """
+    open(app.FILE_QUESTION_COUNTER_NAME, 'a').close()
 
-
-def create_quiz(question, options, correct_option_id):
-    for group in GROUPS:
-        gid = group[0]
-
-        BOT.send_message(gid, question)
-
-        send_poll(
-            gid=gid,
-            options=options,
-            correct_option_id=correct_option_id
-        )
-
-
-def get_question_number():
-    question_number_default = 0
-
-    open('question_counter.txt', 'a').close()
-
-    with open('question_counter.txt', 'r+') as file:
+    with open(app.FILE_QUESTION_COUNTER_NAME, 'r') as file:
         fileline = file.readline()
 
-        if fileline != '':
-            question_number_default = fileline
+        counter_question_number = int(fileline) if fileline != '' else 0
+        amount_questions = get_amount_questions(app=app)
 
-        question_number_default = int(question_number_default) + 1
+        if amount_questions > counter_question_number:
+            counter_question_number = set_counter_questions(app=app)
+        else:
+            counter_question_number = random.randrange(start=amount_questions)
+
+        return counter_question_number
+
+
+def set_counter_questions(app):
+    """Запись в счетчик вызванных вопросов. Просто счетчик."""
+    question_number = 1
+    open(app.FILE_QUESTION_COUNTER_NAME, 'a').close()
+
+    with open(app.FILE_QUESTION_COUNTER_NAME, 'r+') as file:
+        fileline = file.readline()
 
         file.seek(0)
-        file.write(str(question_number_default))
+
+        if fileline != '':
+            question_number = int(fileline) + 1
+
+        file.write(str(question_number))
         file.truncate()
 
-    return question_number_default - 1
+    return question_number - 1
 
 
 def randomize_options(options):
-    correct_option_id = random.randrange(len(options))
+    """Обычная рандомизация ответов с получением корректного ответа"""
+    correct_option_id = random.randrange(start=len(options))
     options[0], options[correct_option_id] = options[correct_option_id], options[0]
 
     return correct_option_id
 
 
 def main():
-    question_quiz = get_question_quiz(get_question_number())
-    correct_option_id = randomize_options(question_quiz.options)
+    """Функция найдет следующий вопрос и отправит в зарегистрированные группы телеграм"""
+    app = kernel.Kernel()
+    question_quiz = get_question_quiz(
+        app=app,
+        question_number=get_question_number(app=app)
+    )
+    correct_option_id = randomize_options(options=question_quiz.options)
 
-    create_quiz(
+    create_telegram_quiz(
+        app=app,
         question=question_quiz.question,
         options=question_quiz.options,
         correct_option_id=correct_option_id,
@@ -139,7 +143,3 @@ def main():
 
 
 main()
-
-# настроить get_question_number()
-# Настроить README.md
-# Донастроить бота по созданию quiz
