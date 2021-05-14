@@ -101,10 +101,6 @@ arrayFromValue(10);
 [a]if [выражение] else [если неверно]
 [a][выражение] if [если верно] else [если неверно]
 
-[q][python] Для чего нужен pass (pass statement)?
-[a]Для заглушки
-[a]-
-
 [q][python] Что выведет **set(list)**?
 ```python
 list = [1, 2, 1, 3, 4, 2]
