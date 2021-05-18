@@ -5,5 +5,3 @@ services:
     build: .
     volumes:
       - .:/usr/src/app
-    ports:
-      - "${PORT}:${PORT}"
