@@ -1,3 +1,5 @@
+import time
+
 import kernel
 import random
 
@@ -14,8 +16,8 @@ def create_telegram_quiz(app, question, options, correct_option_id):
     groups = app.sqlite.get_groups()
 
     for group in groups:
+        time.sleep(15)
         gid = group[0]
-
         app.bot.send_message(gid, question)
 
         app.bot.send_poll(
@@ -37,7 +39,7 @@ def get_question_quiz(app, question_number=0):
             """Находка нужного вопроса. Ставим курсор."""
             if fileline[0:3] == app.FILE_QUESTION_MARK_HANDLER:
                 if question_number == 0:
-                    question_quiz.question += "#{0}\n\n".format(app.BOT_MESSAGE_SEARCH_TAG)
+                    question_quiz.question += "\#{0}\n\n".format(app.BOT_MESSAGE_SEARCH_TAG)
                     question_quiz.question += fileline[3:]
 
                     break

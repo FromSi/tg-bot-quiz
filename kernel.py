@@ -10,7 +10,7 @@ load_dotenv()
 class Kernel:
     def __init__(self):
         self.sqlite = sqlite.SQLite()
-        self.bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
+        self.bot = telebot.TeleBot(os.getenv('BOT_TOKEN'), parse_mode="MarkdownV2")
 
         self.BOT_MESSAGE_SEARCH_TAG = os.getenv('BOT_MESSAGE_SEARCH_TAG')
         self.BOT_POLL_TYPE = 'quiz'
@@ -28,6 +28,8 @@ class Kernel:
         self.FILE_ANSWER_MARK_HANDLER = os.getenv('FILE_ANSWER_MARK_HANDLER')
         self.SQLITE_NAME = os.getenv('SQLITE_NAME')
         self.SQLITE_TABLE_GROUP_NAME = os.getenv('SQLITE_TABLE_GROUP_NAME')
+
+        self.PORT = os.getenv('PORT')
 
         self.BOT_INTERVAL_POLLING = int(os.getenv('BOT_INTERVAL_POLLING'))
         self.BOT_TIMEOUT_POLLING = int(os.getenv('BOT_TIMEOUT_POLLING'))
