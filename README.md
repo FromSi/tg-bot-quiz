@@ -16,9 +16,11 @@ __Бонус:__ всё необходимое в `.env.example`
 
 ## Установка
 1) Склонировать репозиторий -> `git clone https://github.com/FromSi/tg-bot-quiz.git`
-2) Сделать -> `cp .env.example .env`
-3) Запуск бота -> `make run`
-4) Настроить в CRON команду для создания вопроса -> `make create_quiz`
+2) Зайти в проект -> `cd tg-bot-quiz`
+3) Сделать -> `cp .env.example .env`
+4) Добавить в `.env` файл токен бота
+5) Запуск бота -> `make run`
+6) Настроить в CRON команду для создания вопроса -> `make create_quiz`
 
 ## Запуск бота
 Бота нужно запускать через `Makefile`.
